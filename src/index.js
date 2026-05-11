@@ -51,8 +51,8 @@
  import { handleSearch } from './handlers/search.js';
 // import { handleGetMemberProfile } from './handlers/members.js';
 // import { handleGetStories, handleGetStory } from './handlers/stories.js';
-// import { handleOmiseWebhook } from './handlers/webhook.js';
-// import { handleCreateOrder, handleGetOrder, handleConfirmDelivery } from './handlers/orders.js';
+ import { handleOmiseWebhook } from './handlers/webhook.js';
+ import { handleCreateOrder, handleGetOrder, handleConfirmDelivery } from './handlers/orders.js';
 // import { handlePlaceBid, handleGetBids } from './handlers/bids.js';
 // import { handleCreateOffer, handleRespondOffer, handleMassOffer } from './handlers/offers.js';
 // import { handleGetInbox, handleGetConversation, handleSendMessage } from './handlers/chat.js';
@@ -132,7 +132,7 @@ export default {
         // ── Omise webhook (public — signature verified inside handler) ────────
         if (path === '/v1/webhook/omise' && method === 'POST') {
             // return handleOmiseWebhook(request, env);
-            return respond({ error: 'Webhook handler not yet built' }, { status: 503 });
+            return handleOmiseWebhook(request, env);
         }
 
      // ════════════════════════════════════════════════════════════════════
