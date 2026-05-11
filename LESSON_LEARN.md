@@ -295,6 +295,13 @@ If you need Airtable → D1 (e.g. admin approves in Airtable), build a specific
 webhook endpoint that validates the source. Do not make it automatic.
 
 ---
+Worker URL: https://ploikong-api.[your-account].workers.dev
+Health: https://ploikong-api.[your-account].workers.dev/health ✅
+Auto-deploy: GitHub main → Cloudflare ✅
+Completed: 2026-05-12
+---
+
+
 
 ## HOW TO ADD A NEW LESSON
 
