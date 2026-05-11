@@ -52,7 +52,8 @@
 // import { handleGetMemberProfile } from './handlers/members.js';
 // import { handleGetStories, handleGetStory } from './handlers/stories.js';
  import { handleOmiseWebhook } from './handlers/webhook.js';
- import { handleCreateOrder, handleGetOrder, handleConfirmDelivery } from './handlers/orders.js';
+ import { handleCreateOrder, handleGetOrder, handleGetMyOrders, handleConfirmDelivery, handleOpenDispute } from './handlers/orders.js';
+ import { handleCreateCharge } from './handlers/payment.js';
 // import { handlePlaceBid, handleGetBids } from './handlers/bids.js';
 // import { handleCreateOffer, handleRespondOffer, handleMassOffer } from './handlers/offers.js';
 // import { handleGetInbox, handleGetConversation, handleSendMessage } from './handlers/chat.js';
@@ -131,7 +132,6 @@ export default {
 
         // ── Omise webhook (public — signature verified inside handler) ────────
         if (path === '/v1/webhook/omise' && method === 'POST') {
-            // return handleOmiseWebhook(request, env);
             return handleOmiseWebhook(request, env);
         }
 
@@ -276,61 +276,88 @@ export default {
         // ════════════════════════════════════════════════════════════════════
 
         // Authenticate all routes below this point
-        // const auth = await authenticateMemberJWT(request, env);
-        // if (!auth.valid) return respond({ error: 'Unauthorized' }, { status: 401 });
+        const auth = await authenticateMemberJWT(request, env);
+        if (!auth.valid) return respond({ error: 'Unauthorized' }, { status: 401 });
+        const memberId = auth.memberId;
 
         // ── My profile ────────────────────────────────────────────────────
-        // GET  /v1/me              — my profile
-        // PUT  /v1/me              — update profile
-        // GET  /v1/me/watchlist    — my watchlist
-        // GET  /v1/me/orders       — my purchases
-        // GET  /v1/me/listings     — my listings
-        // GET  /v1/me/bids         — my active bids
-        // GET  /v1/me/offers       — my offers sent/received
-        // GET  /v1/me/notifications — unread count + list
+        // GET  /v1/me              — my profile        (members.js — not built yet)
+        // PUT  /v1/me              — update profile     (members.js — not built yet)
+        // GET  /v1/me/watchlist    — my watchlist       (members.js — not built yet)
+        // GET  /v1/me/listings     — my listings        (listings.js — not built yet)
+        // GET  /v1/me/bids         — my active bids     (bids.js — not built yet)
+        // GET  /v1/me/offers       — my offers          (offers.js — not built yet)
+        // GET  /v1/me/notifications — unread list       (members.js — not built yet)
+
+        if (path === '/v1/me/orders' && method === 'GET') {
+            return respond(await handleGetMyOrders(request, env, memberId));
+        }
 
         // ── Listing actions (authenticated) ───────────────────────────────
-        // POST /v1/listings             — create listing
-        // PUT  /v1/listings/:id         — edit my listing
-        // DELETE /v1/listings/:id       — remove my listing
-        // POST /v1/listings/:id/watch   — add to watchlist
-        // DELETE /v1/listings/:id/watch — remove from watchlist
+        if (path === '/v1/listings' && method === 'POST') {
+            return respond(await handleCreateListing(request, env, memberId));
+        }
+        if (path.match(/^\/v1\/listings\/\d+$/) && method === 'PUT') {
+            const listingId = parseInt(path.split('/')[3]);
+            return respond(await handleUpdateListing(listingId, request, env, memberId));
+        }
+        if (path.match(/^\/v1\/listings\/\d+$/) && method === 'DELETE') {
+            const listingId = parseInt(path.split('/')[3]);
+            return respond(await handleDeleteListing(listingId, env, memberId));
+        }
+        // POST /v1/listings/:id/watch   — watchlist (members.js — not built yet)
+        // DELETE /v1/listings/:id/watch — watchlist (members.js — not built yet)
 
-        // ── Search ────────────────────────────────────────────────────────
-        // POST /v1/search/save         — save search with alert
-        // GET  /v1/search/saved        — my saved searches
-        // DELETE /v1/search/saved/:id  — delete saved search
+        // ── Search (authenticated) ────────────────────────────────────────
+        // POST /v1/search/save         — save search (search.js — not built yet)
+        // GET  /v1/search/saved        — my saved searches (search.js — not built yet)
+        // DELETE /v1/search/saved/:id  — delete saved search (search.js — not built yet)
 
         // ── Orders ────────────────────────────────────────────────────────
-        // POST /v1/orders              — create order (buy now)
-        // GET  /v1/orders/:id          — order detail
-        // POST /v1/orders/:id/confirm  — buyer confirms delivery
-        // POST /v1/orders/:id/dispute  — raise dispute
+        if (path === '/v1/orders' && method === 'POST') {
+            return respond(await handleCreateOrder(request, env, memberId));
+        }
+        if (path.match(/^\/v1\/orders\/PLK-\d{8}-[A-Z0-9]{4}$/) && method === 'GET') {
+            const orderId = path.split('/')[3];
+            return respond(await handleGetOrder(orderId, env, memberId));
+        }
+        if (path.match(/^\/v1\/orders\/PLK-\d{8}-[A-Z0-9]{4}\/confirm$/) && method === 'POST') {
+            const orderId = path.split('/')[3];
+            return respond(await handleConfirmDelivery(orderId, env, memberId));
+        }
+        if (path.match(/^\/v1\/orders\/PLK-\d{8}-[A-Z0-9]{4}\/dispute$/) && method === 'POST') {
+            const orderId = path.split('/')[3];
+            return respond(await handleOpenDispute(orderId, request, env, memberId));
+        }
+
+        // ── Payment ───────────────────────────────────────────────────────
+        if (path === '/v1/payment/charge' && method === 'POST') {
+            return respond(await handleCreateCharge(request, env, memberId));
+        }
 
         // ── Bids ──────────────────────────────────────────────────────────
-        // POST /v1/bids                — place bid on auction listing
-        // GET  /v1/bids/:listingId     — bid history for listing
-        // POST /v1/bids/auto           — set auto-bid ceiling
+        // POST /v1/bids                — place bid     (bids.js — not built yet)
+        // GET  /v1/bids/:listingId     — bid history   (bids.js — not built yet)
+        // POST /v1/bids/auto           — auto-bid      (bids.js — not built yet)
 
         // ── Offers ────────────────────────────────────────────────────────
-        // POST /v1/offers              — buyer sends offer
-        // POST /v1/offers/:id/respond  — seller accepts/rejects/counters
-        // POST /v1/offers/mass         — seller sends mass offer to watchers
+        // POST /v1/offers              — send offer    (offers.js — not built yet)
+        // POST /v1/offers/:id/respond  — respond       (offers.js — not built yet)
+        // POST /v1/offers/mass         — mass offer    (offers.js — not built yet)
 
-        // ── Chat ─────────────────────────────────────────────────────────
-        // GET  /v1/chat                — inbox
-        // GET  /v1/chat/:memberId      — conversation thread
-        // POST /v1/chat/:memberId      — send message
+        // ── Chat ──────────────────────────────────────────────────────────
+        // GET  /v1/chat                — inbox         (chat.js — not built yet)
+        // GET  /v1/chat/:memberId      — thread        (chat.js — not built yet)
+        // POST /v1/chat/:memberId      — send message  (chat.js — not built yet)
 
         // ── Stories ───────────────────────────────────────────────────────
-        // POST /v1/stories             — create story
-        // PUT  /v1/stories/:id         — edit my story
+        // POST /v1/stories             — create story  (stories.js — not built yet)
+        // PUT  /v1/stories/:id         — edit story    (stories.js — not built yet)
 
         // ── Consent ───────────────────────────────────────────────────────
-        // GET  /v1/consent/pending     — get unsigned documents
-        // POST /v1/consent/sign        — sign a document version
+        // GET  /v1/consent/pending     — pending docs  (legal.js — not built yet)
+        // POST /v1/consent/sign        — sign doc      (legal.js — not built yet)
 
-        // All member routes return 503 until handlers are built
         return respond({ error: 'Not found' }, { status: 404 });
     },
 
