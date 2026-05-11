@@ -354,6 +354,43 @@ L081 — Order ID regex in routes must match the generation format exactly
 What happened: Order IDs are PLK-YYYYMMDD-XXXX (8 digits, 4 alphanumeric). The route regex must be /PLK-\d{8}-[A-Z0-9]{4}/ — not a generic /:id — or it will collide with numeric listing IDs on the same /v1/ path prefix.
 Rule: Use the exact format regex in route matching for typed IDs. Generic :id patterns cause silent route collisions.
 
+L082 — /v1/bids/auto must be routed BEFORE /v1/bids/:listingId
+What happened: In index.js, the route /v1/bids/auto would be incorrectly
+caught by the regex /^\/v1\/bids\/\d+$/ IF "auto" were numeric. It isn't,
+so the regex doesn't match — but the correct safe order is still: exact paths
+first, then regex patterns. This prevents future bugs if routes are reordered.
+Rule: Always register exact-string routes (e.g. /v1/bids/auto) BEFORE
+regex routes (e.g. /v1/bids/:id) in index.js. Same for /v1/offers/mass
+before /v1/offers/:id/respond.
+Pattern:
+javascript// CORRECT order:
+if (path === '/v1/bids/auto' && method === 'POST') { ... }         // exact first
+if (path.match(/^\/v1\/bids\/\d+$/) && method === 'GET') { ... }   // regex after
+// WRONG order would risk "auto" being swallowed if regex ever broadens
+
+L083 — GET /v1/bids/:listingId is public but sits inside the JWT block
+What happened: Bid history is logically public (anyone can see auction bids)
+but in the current index.js it is wired inside the member JWT block (below
+authenticateMemberJWT). This means unauthenticated users cannot see bid history.
+Decision: Acceptable for Phase 1 — Ploikong is invitation-only, all browsers
+are members. When public browsing opens, move GET /v1/bids/:listingId to the
+PUBLIC LISTING ROUTES section above the JWT call.
+Rule: Add a TODO comment in index.js on that route as a reminder.
+TODO already added: see comment in bids block in index.js.
+
+L084 — max_auto_bid is private — never expose it in public responses
+What happened: bids.js handleGetBids (public endpoint) was explicitly
+written to exclude max_auto_bid from the response. auction_reserve is also
+excluded from public bid history.
+Rule: Any SELECT on the bids table for a public endpoint must omit
+max_auto_bid. Only handleGetMyBids (private, own bids only) may include it.
+Only the listing owner's admin view may see auction_reserve.
+Pattern:
+javascript// Public bid endpoint — explicit column list, never SELECT *
+SELECT b.id, b.amount, b.is_auto_bid, b.status, b.created_at,
+       m.username AS bidder_username
+FROM bids b ...
+// max_auto_bid intentionally excluded
 
 
 Worker URL: https://ploikong-api.[your-account].workers.dev
