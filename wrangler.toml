@@ -48,7 +48,7 @@ binding   = "ASSETS"
 [[d1_databases]]
 binding       = "DB"
 database_name = "ploikong_db"
-database_id   = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id   = "ea1289d3-e265-496a-9cf5-45f225955d7e"
 
 # ── R2 Storage ────────────────────────────────────────────────────────────────
 # Stores: member images, broker documents (encrypted), legal PDFs, evidence files
