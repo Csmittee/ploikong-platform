@@ -47,8 +47,8 @@
 
 // ── Handlers (uncomment as each file is built) ───────────────────────────────
  import { handleRegister, handleLogin, handleStaffLogin } from './handlers/auth.js';
-// import { handleGetListings, handleGetListing, handleCreateListing, handleUpdateListing, handleDeleteListing } from './handlers/listings.js';
-// import { handleSearch } from './handlers/search.js';
+ import { handleGetListings, handleGetListing, handleCreateListing, handleUpdateListing, handleDeleteListing } from './handlers/listings.js';
+ import { handleSearch } from './handlers/search.js';
 // import { handleGetMemberProfile } from './handlers/members.js';
 // import { handleGetStories, handleGetStory } from './handlers/stories.js';
 // import { handleOmiseWebhook } from './handlers/webhook.js';
@@ -60,7 +60,7 @@
 
 // ── Middleware ────────────────────────────────────────────────────────────────
  import { authenticateMemberJWT, authenticateStaffJWT, requireStaffRole } from './middleware/auth.js';
-// import { rateLimit } from './middleware/rateLimit.js';
+ import { rateLimit } from './middleware/rateLimit.js';
 // import { logRequest } from './middleware/logging.js';
 
 export default {
@@ -160,18 +160,18 @@ export default {
 
         if (path === '/v1/listings' && method === 'GET') {
             // return handleGetListings(request, env);
-            return respond({ error: 'Listings handler not yet built' }, { status: 503 });
+            return handleGetListings(request, env);
         }
 
         if (path.match(/^\/v1\/listings\/[^/]+$/) && method === 'GET') {
             const slug = path.split('/')[3];
             // return handleGetListing(slug, env);
-            return respond({ error: 'Listings handler not yet built' }, { status: 503 });
+            return handleGetListing(slug, env);
         }
 
         if (path === '/v1/search' && method === 'GET') {
             // return handleSearch(request, env);
-            return respond({ error: 'Search handler not yet built' }, { status: 503 });
+            return handleSearch(request, env);
         }
 
         if (path.match(/^\/v1\/members\/[^/]+$/) && method === 'GET') {
