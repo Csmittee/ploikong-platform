@@ -1,0 +1,81 @@
+# ════════════════════════════════════════════════════════════════════════════
+#  PLOIKONG — Cloudflare Workers Configuration
+#  File: wrangler.toml
+#  Worker: ploikong-api
+#  Domain: api.ploikong.com
+#
+#  SECRETS — set via Cloudflare Dashboard → Workers → ploikong-api → Settings
+#  → Variables → Add variable (set as secret/encrypted):
+#
+#    JWT_SECRET           — random 32+ char string, signs member+staff JWTs
+#    ADMIN_SECRET         — X-Admin-Token for /admin dashboard
+#    ADMIN_PATH           — custom admin path (default: /admin)
+#    OMISE_SECRET_KEY     — Omise API key (skey_test_... for test mode)
+#    OMISE_WEBHOOK_SECRET — Omise webhook signing secret
+#    ENCRYPTION_KEY       — 32-byte hex for AES-256-GCM column encryption
+#                           Generate once: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+#                           NEVER change after data is stored
+#    ZOHO_CLIENT_ID       — same credentials as Satu/Janis project
+#    ZOHO_CLIENT_SECRET   — same as Satu/Janis
+#    ZOHO_REFRESH_TOKEN   — same as Satu/Janis
+#    ALERT_EMAIL          — chairit.smittee@janishammer.com
+#    CLOUDINARY_API_KEY   — for server-side upload signing
+#    CLOUDINARY_API_SECRET
+#    CLOUDINARY_CLOUD_NAME
+#    PAYMENT_MODE         — 'fake' for dev/test, 'live' for real money
+#    ENVIRONMENT          — 'production' or 'development'
+#    AIRTABLE_PAT         — Personal Access Token (set when building sync worker)
+#    AIRTABLE_WORKSPACE_ID — wsp... ID (set when building sync worker)
+# ════════════════════════════════════════════════════════════════════════════
+
+name                 = "ploikong-api"
+main                 = "src/index.js"
+compatibility_date   = "2024-04-01"
+compatibility_flags  = ["nodejs_compat"]
+workers_dev          = true
+
+# ── Static Assets ─────────────────────────────────────────────────────────────
+# HTML files in ./public/ served at their filename path automatically.
+# Worker fetch() handles /v1/* API routes.
+# Cloudflare serves static assets first; falls through to Worker if no match.
+[assets]
+directory = "./public"
+binding   = "ASSETS"
+
+# ── D1 Database ───────────────────────────────────────────────────────────────
+# IMPORTANT: Replace database_id with your actual ID from Cloudflare Dashboard
+# Dashboard → D1 → ploikong_db → copy the ID shown
+[[d1_databases]]
+binding       = "DB"
+database_name = "ploikong_db"
+database_id   = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+# ── R2 Storage ────────────────────────────────────────────────────────────────
+# Stores: member images, broker documents (encrypted), legal PDFs, evidence files
+[[r2_buckets]]
+binding     = "IMAGES"
+bucket_name = "ploikong-images"
+
+# ── Custom Domain Route ───────────────────────────────────────────────────────
+# Set up in Cloudflare Dashboard → Workers → ploikong-api → Triggers → Custom Domains
+# Add: api.ploikong.com
+routes = [
+  { pattern = "api.ploikong.com/*", zone_name = "ploikong.com" }
+]
+
+# ── Cron Triggers ─────────────────────────────────────────────────────────────
+# Every 6 hours — runs 8 scheduled jobs (see src/index.js scheduled() handler)
+#   expire_listings       — auctions past end time → expired
+#   release_payouts       — payout_due_at < now → release escrow
+#   process_notifications — send queued Zoho emails (max 3 attempts)
+#   check_saved_searches  — match new listings to saved searches
+#   broker_compliance_due — flag brokers whose 14-day check is due
+#   check_insurance_expiry— warn/suspend brokers with lapsing insurance
+#   cleanup_rate_limits   — delete stale rate_limit_counters rows
+#   expire_offers         — offers past expires_at → expired
+[triggers]
+crons = ["0 */6 * * *"]
+
+# ── Observability ─────────────────────────────────────────────────────────────
+[observability]
+enabled = true
