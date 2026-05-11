@@ -308,7 +308,38 @@ L074 — D1 Console SQL must be comment-free and in blocks under ~50 rows
 What happened: SQL with inline comments and long single-statement inserts was given for D1 Console. D1 Console does not handle comments well and times out on very long single statements.
 Rule: Any SQL meant to run in D1 Console must have all comments stripped. Split large INSERT statements into blocks of 7 rows maximum. Always end with a verification SELECT COUNT(*) as a separate block.
 ---
+L075 — Public GET routes activate before auth is wired
+What happened: listings GET routes (feed, single item, search) are public —
+they can be uncommented and activated in index.js before member JWT auth
+is fully wired into the protected routes section.
+Rule: Activate public GET routes immediately when the handler is built.
+Leave POST/PUT/DELETE commented until memberId extraction from JWT is confirmed working.
+Pattern: Public = uncomment now. Transactional = wait for auth wire-up session.
 
+---
+
+L076 — generateUniqueSlug lives in the handler, not in index.js
+What happened: slugify.js is imported inside listings.js directly.
+index.js does not need to import it.
+Rule: Utility imports belong in the handler file that uses them, not in the router.
+index.js only imports handlers and middleware — never utilities directly.
+
+---
+
+L077 — index.js route stubs: leave commented line above active line
+What happened: original stub lines (// return handleGetListings) were left
+above the active lines as a record of what changed.
+Rule: Leave the commented stub in place — it shows the before/after without
+needing git blame. Delete only when file is fully stable and tested.
+
+---
+
+L078 — Search in Phase 1 is LIKE query only — not full text search
+What happened: D1/SQLite has no full-text index built for Phase 1.
+Search uses LIKE %keyword% across title, story, tags, origin, provenance.
+Rule: This is correct under ~1000 listings. At ~5000 listings, replace with
+Cloudflare Vectorize or a keyword index table. Do not over-engineer now.
+Flag in code with a TODO comment so the upgrade point is obvious.
 
 
 
