@@ -392,6 +392,14 @@ SELECT b.id, b.amount, b.is_auto_bid, b.status, b.created_at,
 FROM bids b ...
 // max_auto_bid intentionally excluded
 
+### L085 — Always check current lesson count before numbering new ones
+**What happened:** Claude numbered new lessons starting from L079 without
+verifying the current last lesson in LESSON_LEARN.md. The file was already
+at L081, so the new lessons collided.
+**Rule:** Before writing any new lesson, read the bottom of LESSON_LEARN.md
+and find the last L number. New lessons start from last+1. Never assume.
+**Pattern:** At start of every session where lessons may be added —
+search LESSON_LEARN.md for the highest L number before writing anything new.
 
 Worker URL: https://ploikong-api.[your-account].workers.dev
 Health: https://ploikong-api.[your-account].workers.dev/health ✅
