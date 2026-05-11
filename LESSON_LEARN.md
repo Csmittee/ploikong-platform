@@ -295,6 +295,25 @@ If you need Airtable → D1 (e.g. admin approves in Airtable), build a specific
 webhook endpoint that validates the source. Do not make it automatic.
 
 ---
+L073 — rateLimit middleware must exist before routes call it
+What happened: Auth routes were told to call rateLimit() before rateLimit.js was built. Worker crashed on any auth request.
+Rule: Never uncomment a middleware call in index.js until the middleware file is physically in the repo. When a handler is built before its middleware, call the handler directly and leave the rateLimit line commented. Swap in one line per route when the middleware file is ready.
+Pattern:
+javascript// rateLimit.js not built yet — call handler directly:
+return handleRegister(request, env);
+// When rateLimit.js is ready, swap to:
+// return rateLimit(request, env, () => handleRegister(request, env));
+---
+L074 — D1 Console SQL must be comment-free and in blocks under ~50 rows
+What happened: SQL with inline comments and long single-statement inserts was given for D1 Console. D1 Console does not handle comments well and times out on very long single statements.
+Rule: Any SQL meant to run in D1 Console must have all comments stripped. Split large INSERT statements into blocks of 7 rows maximum. Always end with a verification SELECT COUNT(*) as a separate block.
+---
+
+
+
+
+
+
 Worker URL: https://ploikong-api.[your-account].workers.dev
 Health: https://ploikong-api.[your-account].workers.dev/health ✅
 Auto-deploy: GitHub main → Cloudflare ✅
