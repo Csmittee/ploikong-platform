@@ -54,8 +54,8 @@
  import { handleOmiseWebhook } from './handlers/webhook.js';
  import { handleCreateOrder, handleGetOrder, handleGetMyOrders, handleConfirmDelivery, handleOpenDispute } from './handlers/orders.js';
  import { handleCreateCharge } from './handlers/payment.js';
-// import { handlePlaceBid, handleGetBids } from './handlers/bids.js';
-// import { handleCreateOffer, handleRespondOffer, handleMassOffer } from './handlers/offers.js';
+ import { handlePlaceBid, handleGetBids, handleSetAutoBid, handleGetMyBids } from './handlers/bids.js';
+ import { handleCreateOffer, handleRespondOffer, handleMassOffer, handleGetMyOffers } from './handlers/offers.js';
 // import { handleGetInbox, handleGetConversation, handleSendMessage } from './handlers/chat.js';
 // import { handleAdminDashboard, handleAdminTableData, handleAdminConfig } from './handlers/admin.js';
 
@@ -285,8 +285,8 @@ export default {
         // PUT  /v1/me              — update profile     (members.js — not built yet)
         // GET  /v1/me/watchlist    — my watchlist       (members.js — not built yet)
         // GET  /v1/me/listings     — my listings        (listings.js — not built yet)
-        // GET  /v1/me/bids         — my active bids     (bids.js — not built yet)
-        // GET  /v1/me/offers       — my offers          (offers.js — not built yet)
+        // GET  /v1/me/bids         — ✅ active (wired in Bids block below)
+        // GET  /v1/me/offers       — ✅ active (wired in Offers block below)
         // GET  /v1/me/notifications — unread list       (members.js — not built yet)
 
         if (path === '/v1/me/orders' && method === 'GET') {
@@ -335,15 +335,35 @@ export default {
             return respond(await handleCreateCharge(request, env, memberId));
         }
 
-        // ── Bids ──────────────────────────────────────────────────────────
-        // POST /v1/bids                — place bid     (bids.js — not built yet)
-        // GET  /v1/bids/:listingId     — bid history   (bids.js — not built yet)
-        // POST /v1/bids/auto           — auto-bid      (bids.js — not built yet)
+        // ── Bids ─────────────────────────────────────────────────────────
+        if (path === '/v1/bids' && method === 'POST') {
+            return respond(await handlePlaceBid(request, env, memberId));
+        }
+        if (path === '/v1/bids/auto' && method === 'POST') {
+            return respond(await handleSetAutoBid(request, env, memberId));
+        }
+        if (path.match(/^\/v1\/bids\/\d+$/) && method === 'GET') {
+            const listingId = path.split('/')[3];
+            return respond(await handleGetBids(listingId, request, env));
+        }
+        if (path === '/v1/me/bids' && method === 'GET') {
+            return respond(await handleGetMyBids(request, env, memberId));
+        }
 
-        // ── Offers ────────────────────────────────────────────────────────
-        // POST /v1/offers              — send offer    (offers.js — not built yet)
-        // POST /v1/offers/:id/respond  — respond       (offers.js — not built yet)
-        // POST /v1/offers/mass         — mass offer    (offers.js — not built yet)
+        // ── Offers ───────────────────────────────────────────────────────
+        if (path === '/v1/offers' && method === 'POST') {
+            return respond(await handleCreateOffer(request, env, memberId));
+        }
+        if (path === '/v1/offers/mass' && method === 'POST') {
+            return respond(await handleMassOffer(request, env, memberId));
+        }
+        if (path.match(/^\/v1\/offers\/\d+\/respond$/) && method === 'POST') {
+            const offerId = parseInt(path.split('/')[3]);
+            return respond(await handleRespondOffer(offerId, request, env, memberId));
+        }
+        if (path === '/v1/me/offers' && method === 'GET') {
+            return respond(await handleGetMyOffers(request, env, memberId));
+        }
 
         // ── Chat ──────────────────────────────────────────────────────────
         // GET  /v1/chat                — inbox         (chat.js — not built yet)
