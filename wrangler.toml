@@ -57,8 +57,6 @@ binding     = "IMAGES"
 bucket_name = "ploikong-images"
 
 # ── Custom Domain Route ───────────────────────────────────────────────────────
-# Set up in Cloudflare Dashboard → Workers → ploikong-api → Triggers → Custom Domains
-# Add: api.ploikong.com
 routes = [
   { pattern = "api.ploikong.com/*", zone_name = "ploikong.com" }
 ]
