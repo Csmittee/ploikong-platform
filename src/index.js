@@ -46,7 +46,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 // ── Handlers (uncomment as each file is built) ───────────────────────────────
-// import { handleRegister, handleLogin, handleStaffLogin } from './handlers/auth.js';
+ import { handleRegister, handleLogin, handleStaffLogin } from './handlers/auth.js';
 // import { handleGetListings, handleGetListing, handleCreateListing, handleUpdateListing, handleDeleteListing } from './handlers/listings.js';
 // import { handleSearch } from './handlers/search.js';
 // import { handleGetMemberProfile } from './handlers/members.js';
@@ -59,7 +59,7 @@
 // import { handleAdminDashboard, handleAdminTableData, handleAdminConfig } from './handlers/admin.js';
 
 // ── Middleware ────────────────────────────────────────────────────────────────
-// import { authenticateMemberJWT, authenticateStaffJWT, requireStaffRole } from './middleware/auth.js';
+ import { authenticateMemberJWT, authenticateStaffJWT, requireStaffRole } from './middleware/auth.js';
 // import { rateLimit } from './middleware/rateLimit.js';
 // import { logRequest } from './middleware/logging.js';
 
@@ -135,23 +135,23 @@ export default {
             return respond({ error: 'Webhook handler not yet built' }, { status: 503 });
         }
 
-        // ════════════════════════════════════════════════════════════════════
-        //  AUTH ROUTES — rate limited
+     // ════════════════════════════════════════════════════════════════════
+        //  AUTH ROUTES — rate limited when rateLimit.js is built
         // ════════════════════════════════════════════════════════════════════
 
         if (path === '/v1/auth/register' && method === 'POST') {
             // return rateLimit(request, env, () => handleRegister(request, env));
-            return respond({ error: 'Auth handler not yet built' }, { status: 503 });
+            return handleRegister(request, env);
         }
 
         if (path === '/v1/auth/login' && method === 'POST') {
             // return rateLimit(request, env, () => handleLogin(request, env));
-            return respond({ error: 'Auth handler not yet built' }, { status: 503 });
+            return handleLogin(request, env);
         }
 
         if (path === '/v1/auth/staff/login' && method === 'POST') {
             // return rateLimit(request, env, () => handleStaffLogin(request, env));
-            return respond({ error: 'Staff auth handler not yet built' }, { status: 503 });
+            return handleStaffLogin(request, env);
         }
 
         // ════════════════════════════════════════════════════════════════════
