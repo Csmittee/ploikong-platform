@@ -342,6 +342,17 @@ Cloudflare Vectorize or a keyword index table. Do not over-engineer now.
 Flag in code with a TODO comment so the upgrade point is obvious.
 
 
+L079 — index.js: auth block must be uncommented before order/payment routes go live
+What happened: The member JWT auth check (authenticateMemberJWT) was left commented in index.js while order/payment imports were activated. This would have allowed unauthenticated access to all transactional routes.
+Rule: Never activate a transactional route import without also activating the auth block above it. They are one atomic step — do both together or neither.
+
+L080 — payment.js fake mode must call confirmOrderPayment() to queue notifications
+What happened: In fake mode, Omise webhook never fires, so payment confirmation and notification queuing would be skipped if the handler just updated the DB and returned. The fake mode handler must call confirmOrderPayment() directly so buyer/seller emails are queued identically to live mode.
+Rule: Fake mode must mirror live mode behavior exactly — same DB updates, same notification queue inserts. Only the Omise API call is skipped.
+
+L081 — Order ID regex in routes must match the generation format exactly
+What happened: Order IDs are PLK-YYYYMMDD-XXXX (8 digits, 4 alphanumeric). The route regex must be /PLK-\d{8}-[A-Z0-9]{4}/ — not a generic /:id — or it will collide with numeric listing IDs on the same /v1/ path prefix.
+Rule: Use the exact format regex in route matching for typed IDs. Generic :id patterns cause silent route collisions.
 
 
 
