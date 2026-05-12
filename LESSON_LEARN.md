@@ -466,7 +466,24 @@ On a light page background it looked faded and ugly, not attention-grabbing.
 **Rule:** Badges and alerts that need attention use red #e53e3e with white text.
 Brand gold is for headings, borders, accents, and CTAs only — not status badges.
 
+### L093 — FOUC prevention `background: white` silently kills glass/blur design
+**What happened:** index.html had a FOUC-prevention style block that added
+`background: white` to every section to prevent flash before the injector loaded.
+This completely overrides any glass/backdropfilter effect because white is opaque.
+It was invisible to diagnosis because it looks intentional — a safety style, not a bug.
+**Rule:** FOUC prevention blocks must ONLY set `visibility: visible` — NEVER set
+`background` on content sections. Background is the injector's responsibility.
+If sections need a fallback background before injector loads, use a transparent
+or semi-transparent rgba value, never a solid color.
+**Pattern:**
+/* CORRECT — FOUC block */
+.hero-section, .section-container, .brand-section { visibility: visible; }
 
+/* WRONG — kills glass design */
+.hero-section, .section-container, .brand-section {
+    visibility: visible;
+    background: white;  ← never set background here
+}
 
 
 
