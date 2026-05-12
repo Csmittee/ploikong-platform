@@ -404,19 +404,80 @@ search LESSON_LEARN.md for the highest L number before writing anything new.
 L086 — Do not create manual text fields when a Lookup already exists
 When designing Airtable tables, if a linked record field (e.g. Business Link) already exists, create bus_id as a Lookup field pulling from that relationship — not a manual Single line text field. Manual text requires the user to type the same value twice and creates a failure point. Lookup auto-populates from the relationship. Check the Products table as the reference pattern — bus_id there is already a Lookup. Apply this same pattern to all new tables (Gallery, News, Testimonials).
 
-### L087 — Never use [skip ci] in workflow commit messages
-**What happened:** generate-news.yml (and other generate workflows) used
-"[skip ci]" in the auto-commit message. This tells GitHub Actions to skip
-ALL workflows on that commit — which can silently block other pipelines
-that depend on the pushed file.
-**Rule:** Remove [skip ci] from all workflow commit messages. The bot commit
-only touches its own output file (e.g. news-data.json) so there is no
-infinite loop risk. Let CI run normally.
+### L088 — Never use [skip ci] in workflow auto-commit messages
+**What happened:** generate-news.yml was drafted with [skip ci] in the commit
+message. This tells GitHub Actions to skip ALL workflows on that commit —
+can silently block other pipelines depending on the pushed file.
+**Rule:** Remove [skip ci] from all workflow commit messages. Bot commits only
+touch their own output file so there is no infinite loop risk.
 **Pattern:**
-git commit -m "chore: regenerate news-data.json"   ✅
-git commit -m "chore: regenerate news-data.json [skip ci]"   ❌
-**Also check:** generate-gallery.yml, generate-blog.yml, generate-products.yml
-— remove [skip ci] from all of them if present.
+git commit -m "chore: regenerate news-data.json"        ✅
+git commit -m "chore: regenerate news-data.json [skip ci]"  ❌
+Check: generate-gallery.yml, generate-blog.yml, generate-products.yml —
+all confirmed clean. Only new workflows need this check at generation time.
+
+---
+
+### L089 — Smooth expand must use max-height transition, never display:none toggle
+**What happened:** News accordion was using display:none / display:block toggle.
+This always snaps — cannot be animated. User wanted luxury smooth open.
+**Rule:** For any expand/collapse animation use max-height + opacity + transition.
+Never toggle display property when smoothness matters.
+**Pattern:**
+.element {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.5s ease 0.1s,
+                padding 0.4s ease;
+}
+.element.open {
+    max-height: 600px;
+    opacity: 1;
+    padding: 0.75rem 0;
+}
+cubic-bezier(0.4, 0, 0.2, 1) — starts fast, decelerates gently at the end.
+Opacity delay 0.1s — content appears as tray arrives, not before.
+
+---
+
+### L090 — Text-heavy sections use 800px max-width, not 1280px
+**What happened:** News section was set to max-width 1280px matching the
+layout containers. Wide text blocks are hard to read and look undesigned.
+**Rule:** Any section that is primarily text (news, testimonials, FAQ, blog)
+should cap at 800px max-width. 1280px is for image grids and full layouts only.
+
+---
+
+### L091 — Links belong in body text, not as a separate link_url button
+**What happened:** News items had a link_url field that powered a "Learn more"
+button. This sent users to random pages (Facebook, product listing, contact)
+with no context — confusing UX.
+**Rule:** Remove dedicated link_url buttons from card/accordion components.
+Links should appear naturally inside the body text where they have context.
+The link_url Airtable field is not needed and should not be output to JSON.
+
+---
+
+### L092 — Brand gold (#FFD700) must never be used as badge/alert background
+**What happened:** NEW badge used brand gold background with dark text.
+On a light page background it looked faded and ugly, not attention-grabbing.
+**Rule:** Badges and alerts that need attention use red #e53e3e with white text.
+Brand gold is for headings, borders, accents, and CTAs only — not status badges.
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Worker URL: https://ploikong-api.[your-account].workers.dev
 Health: https://ploikong-api.[your-account].workers.dev/health ✅
