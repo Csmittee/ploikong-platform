@@ -404,7 +404,19 @@ search LESSON_LEARN.md for the highest L number before writing anything new.
 L086 — Do not create manual text fields when a Lookup already exists
 When designing Airtable tables, if a linked record field (e.g. Business Link) already exists, create bus_id as a Lookup field pulling from that relationship — not a manual Single line text field. Manual text requires the user to type the same value twice and creates a failure point. Lookup auto-populates from the relationship. Check the Products table as the reference pattern — bus_id there is already a Lookup. Apply this same pattern to all new tables (Gallery, News, Testimonials).
 
-
+### L087 — Never use [skip ci] in workflow commit messages
+**What happened:** generate-news.yml (and other generate workflows) used
+"[skip ci]" in the auto-commit message. This tells GitHub Actions to skip
+ALL workflows on that commit — which can silently block other pipelines
+that depend on the pushed file.
+**Rule:** Remove [skip ci] from all workflow commit messages. The bot commit
+only touches its own output file (e.g. news-data.json) so there is no
+infinite loop risk. Let CI run normally.
+**Pattern:**
+git commit -m "chore: regenerate news-data.json"   ✅
+git commit -m "chore: regenerate news-data.json [skip ci]"   ❌
+**Also check:** generate-gallery.yml, generate-blog.yml, generate-products.yml
+— remove [skip ci] from all of them if present.
 
 Worker URL: https://ploikong-api.[your-account].workers.dev
 Health: https://ploikong-api.[your-account].workers.dev/health ✅
