@@ -401,6 +401,11 @@ and find the last L number. New lessons start from last+1. Never assume.
 **Pattern:** At start of every session where lessons may be added —
 search LESSON_LEARN.md for the highest L number before writing anything new.
 
+L086 — Do not create manual text fields when a Lookup already exists
+When designing Airtable tables, if a linked record field (e.g. Business Link) already exists, create bus_id as a Lookup field pulling from that relationship — not a manual Single line text field. Manual text requires the user to type the same value twice and creates a failure point. Lookup auto-populates from the relationship. Check the Products table as the reference pattern — bus_id there is already a Lookup. Apply this same pattern to all new tables (Gallery, News, Testimonials).
+
+
+
 Worker URL: https://ploikong-api.[your-account].workers.dev
 Health: https://ploikong-api.[your-account].workers.dev/health ✅
 Auto-deploy: GitHub main → Cloudflare ✅
