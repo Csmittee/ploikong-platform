@@ -512,7 +512,19 @@ is wrong. Delete from core, keep in config.
 design was finally achieved and locked. These rules must never be broken.
 
 **TRANSPARENT — these classes must always have background: transparent**
+L096 — Never rewrite a full HTML file when only adding a section
+Always diff the original vs what you deliver. If the diff shows more than your intended changes — stop, identify what changed, fix before delivering. A full rewrite is never acceptable when the task is "add a section."
 
+L097 — Always use download files for HTML over 100 lines
+Copy-paste of large HTML files introduces invisible errors. Always present_files for download. No exceptions for files the user will upload to GitHub.
+
+L098 — Never use octal escape sequences in JS template literals
+'\201C' inside a backtick template string causes SyntaxError and kills the entire config file. Use the literal character " or ' directly instead. Always run node --input-type=module syntax check before delivering any .js file.
+
+L099 — Diff before AND after every delivery
+Before: diff your output against the original to confirm only intended changes exist. After: if the user reports a problem, diff again to find what slipped through. Never trust memory — always diff the files.
+L100 — New CSS card structures require matching JS card builder updates
+If CSS expects .testimonial-photo-wrap and .testimonial-content divs, the JS that builds the HTML must also output those divs. CSS and JS card structure must always match — check both together before delivering.
 
 
 
