@@ -526,7 +526,21 @@ Before: diff your output against the original to confirm only intended changes e
 L100 — New CSS card structures require matching JS card builder updates
 If CSS expects .testimonial-photo-wrap and .testimonial-content divs, the JS that builds the HTML must also output those divs. CSS and JS card structure must always match — check both together before delivering.
 
+L101 - White text on light background — feature cards and transparent containers
+Never use rgba(255,255,255,x) for text inside cards that float over the site background. The background is mostly white. Only use white text on: dark navbar, dark overlays, dark testimonial cards. Card body text must use #333333 or darker.
 
+L102 - Cloudflare Pages _headers — wildcard JS rule silently overrides specific path rules
+Never use /*.js with max-age greater than 0 if any JS file needs real-time updates. The wildcard bleeds onto specific paths and the specific path rule does not reliably win. The correct setup is to list only the specific injector files explicitly with max-age=0, must-revalidate and remove the /*.js wildcard entirely.
+
+L103- Two systems must both release for a cached JS injector fix to take effect
+When an injector JS file is corrected in GitHub and deployed successfully, the fix may still not appear because: (1) Cloudflare edge serves stale JS due to a wildcard cache rule, AND (2) the browser holds the already-executed script in memory. Both must clear together. Hard reload Cmd+Shift+R forces both. Incognito alone is not sufficient.
+
+L104 - Debugging injected styles — use the console, not DevTools Styles panel
+When a CSS class color looks wrong, run this to confirm what is actually live in the injected style block — not what GitHub says, not what DevTools guesses:
+javascriptfetch('/js/iflex-config.js').then(r=>r.text()).then(t=>{
+    const idx = t.indexOf('YOUR-CLASS-NAME');
+    console.log(t.slice(idx, idx+120));
+});
 
 
 
