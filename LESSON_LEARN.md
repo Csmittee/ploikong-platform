@@ -466,26 +466,52 @@ On a light page background it looked faded and ugly, not attention-grabbing.
 **Rule:** Badges and alerts that need attention use red #e53e3e with white text.
 Brand gold is for headings, borders, accents, and CTAs only — not status badges.
 
-### L093 — FOUC prevention `background: white` silently kills glass/blur design
-**What happened:** index.html had a FOUC-prevention style block that added
-`background: white` to every section to prevent flash before the injector loaded.
-This completely overrides any glass/backdropfilter effect because white is opaque.
-It was invisible to diagnosis because it looks intentional — a safety style, not a bug.
-**Rule:** FOUC prevention blocks must ONLY set `visibility: visible` — NEVER set
-`background` on content sections. Background is the injector's responsibility.
-If sections need a fallback background before injector loads, use a transparent
-or semi-transparent rgba value, never a solid color.
+---
+
+### L093 — FOUC block must never contain background property — only visibility
+**What happened:** The critical inline style block at the top of every HTML page
+had `background: white` added alongside `visibility: visible`. This was intended
+to prevent flash of unstyled content but instead painted solid white over every
+section before the injector loaded — completely destroying the glass transparent
+design. It survived multiple sessions undetected because it looked intentional.
+**Rule:** The FOUC block in every HTML page may ONLY contain `visibility: visible`.
+Never set `background`, `color`, or any other visual property there.
 **Pattern:**
-/* CORRECT — FOUC block */
-.hero-section, .section-container, .brand-section { visibility: visible; }
-
-/* WRONG — kills glass design */
-.hero-section, .section-container, .brand-section {
-    visibility: visible;
-    background: white;  ← never set background here
+```css
+/* CORRECT */
+.hero-section, .brand-section, .section-container, .bottom-hero { 
+    visibility: visible; 
 }
+/* WRONG — kills glass design on every section */
+.hero-section, .brand-section { 
+    visibility: visible; 
+    background: white;  ← NEVER
+}
+```
+**Applies to:** index.html, th/index.html, and every future page added to the site.
 
+---
 
+### L094 — CSS class ownership — iflex-core.js vs iflex-config.js never overlap
+**What happened:** Multiple chat sessions added section CSS (glass effects, backgrounds,
+layout) into iflex-core.js alongside the navbar and footer styles. iflex-config.js
+already owned those same classes. Two definitions of the same class = unpredictable
+winner depending on load order. Caused white panels, missing images, wrong glass tint.
+**Rule:** Strict ownership — never cross the boundary:
+- `iflex-core.js` owns ONLY: `.navbar-fixed-wrapper`, `.footer`, `.mobile-menu`,
+  `.hamburger`, `.lang-sel-wrapper`, `body` (background only), `.btn` (fallback only)
+- `iflex-config.js` owns EVERYTHING ELSE: all section classes, glass effects,
+  typography, animations, cards, FAQ, news, marquee, compare table
+**Detection:** If the same class appears in both files, the one in iflex-core.js
+is wrong. Delete from core, keep in config.
+
+---
+
+### L095 — Glass design system — permanent locked rules for i-flexthailand.com
+**What happened:** After a full day of debugging, the glass transparent scroll
+design was finally achieved and locked. These rules must never be broken.
+
+**TRANSPARENT — these classes must always have background: transparent**
 
 
 
