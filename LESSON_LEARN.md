@@ -523,6 +523,7 @@ L098 — Never use octal escape sequences in JS template literals
 
 L099 — Diff before AND after every delivery
 Before: diff your output against the original to confirm only intended changes exist. After: if the user reports a problem, diff again to find what slipped through. Never trust memory — always diff the files.
+
 L100 — New CSS card structures require matching JS card builder updates
 If CSS expects .testimonial-photo-wrap and .testimonial-content divs, the JS that builds the HTML must also output those divs. CSS and JS card structure must always match — check both together before delivering.
 
@@ -541,7 +542,31 @@ javascriptfetch('/js/iflex-config.js').then(r=>r.text()).then(t=>{
     const idx = t.indexOf('YOUR-CLASS-NAME');
     console.log(t.slice(idx, idx+120));
 });
+L105 — querySelectorAll is not live — place after all target elements or use DOMContentLoaded
+What happened: The video scroll-play script ran mid-page (after the brand section). querySelectorAll('.video-card') captured only the 3 factory videos above it. The equipment video card below the script was not yet in the DOM and was completely ignored — stayed black on scroll.
+Rule: Any querySelectorAll that needs to find elements below its script tag must be wrapped in document.addEventListener('DOMContentLoaded', ...). This delays execution until the full page is parsed. Alternatively, move the script to just before </body>.
+Pattern:
+javascript// WRONG — runs mid-page, misses elements below
+(function() {
+    var cards = document.querySelectorAll('.video-card');
+})();
 
+// CORRECT — waits for full DOM
+document.addEventListener('DOMContentLoaded', function() {
+    var cards = document.querySelectorAll('.video-card');
+});
+
+L106 — Video autoplay stays muted in-page; sound lives in the lightbox
+What happened: Owner asked why the equipment video had no sound after scroll-play was fixed.
+Rule: Browser policy requires muted for autoplay to work without user gesture. This is not a bug — it is intentional design. The correct UX pattern for this site is: muted autoplay in-page thumbnail, full sound + controls when user clicks to open lightbox. Never remove muted from inline video tags. Never add muted to the lightbox video tag.
+
+L107 — CSS background-image on container is more reliable than position:absolute img tag for image sections
+What happened: The CTA section was first built with an <img> tag set to position: absolute inside a position: relative container with no fixed height. The container collapsed to zero height and all text content fell below the image instead of overlaying it.
+Rule: For any section that needs text overlaid on a full-bleed image, always use background-image on the container itself — same pattern as .hero-section and .bottom-hero. Set min-height, use ::before for the gradient overlay, and position: relative; z-index: 2 on the text content. Never use <img position: absolute> for decorative background images.
+
+L108 — Apply fixes to both EN and TH files in the same session — never assume they are in sync
+What happened: The DOMContentLoaded fix was applied to index.html and confirmed working. The Thai th/index.html was not updated in the same pass. Owner downloaded the TH file from a previous session which still had the old (function() { pattern. Video stayed black on TH only.
+Rule: Every fix to index.html must be applied to th/index.html in the same session before delivering. Confirm both files are updated before closing the chat. Never assume the TH file is in sync with EN.
 
 
 
