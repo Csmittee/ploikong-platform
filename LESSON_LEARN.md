@@ -631,6 +631,16 @@ Fix: Cloudflare dashboard → Caching → Configuration → Purge Everything.
 Live within 30 seconds. This is the only reliable mobile cache clear for injector files.
 Reference: Reinforces L103 — both Cloudflare edge and browser must clear together.
 
+L115 — Always check GitHub Action logs line by line, not just green checkmark
+A green Action can still be silently using fallback data. The ⚠️ Airtable fetch failed — existing CSV will be used as fallback line in the log is the signal. 8-second runs = no commit = fallback running. 11+ second runs = real data fetched and committed.
+L116 — Check Airtable field types before writing any generator code
+AI text fields return dict objects via API: {'state': 'generated', 'value': '...', 'isStale': False}. CSV exports convert these to plain text automatically — masking the bug. Always ask: is this field AI text or plain text? If AI text, either convert to plain text first (preferred) or add unwrap_ai(). Converting is simpler — no code needed.
+L117 — Never use format specs inside Python .format() template strings
+{price:,.0f} inside a triple-quoted template string used with .format() will fail or produce wrong output. Pre-format the value before passing it: price_formatted = f'{price:,.0f}' then pass price_formatted=price_formatted into .format(). Use {price_formatted} in the template.
+L118 — Blog posts need baked-in alternate language URLs
+Blog uses different slugs per language (slug EN, slug_th TH). The injector language switcher cannot derive the counterpart URL by string manipulation alone. Fix: bake data-lang-en and data-lang-th into the <html> tag at generation time. Switcher reads these attributes directly. This pattern should be applied to any future content type that uses different slugs per language.
+L119 — Convert Airtable AI fields to plain text before building any generator
+If you plan to use your own dashboard + Claude API for translations (which is the correct long-term strategy), Airtable AI fields are unnecessary cost and a source of silent bugs. Convert all AI text fields to Single line text or Long text immediately when starting a new generator. The unwrap_ai() safety net in the code handles edge cases but plain fields are always preferred.
 
 
 
