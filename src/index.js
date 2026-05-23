@@ -56,6 +56,16 @@
  import { handleCreateCharge } from './handlers/payment.js';
  import { handlePlaceBid, handleGetBids, handleSetAutoBid, handleGetMyBids } from './handlers/bids.js';
  import { handleCreateOffer, handleRespondOffer, handleMassOffer, handleGetMyOffers } from './handlers/offers.js';
+ import {
+   handleApplyBroker,
+   handleListBrokerApps, handleGetBrokerApp,
+   handleAdvanceBrokerPhase, handleApproveBroker,
+   handleRejectBroker, handleSuspendBroker, handleReinstateBroker,
+   handleAttachBrokerDocument, handleListBrokerDocuments,
+   handleListComplianceChecks, handleCreateComplianceCheck, handleRecordComplianceResult,
+   handleListBrokerFlags, handleRaiseBrokerFlag, handleResolveBrokerFlag,
+   handleReportPaymentBypass, handleListPaymentReports, handleResolvePaymentReport
+ } from './handlers/broker.js';
 // import { handleGetInbox, handleGetConversation, handleSendMessage } from './handlers/chat.js';
 // import { handleAdminDashboard, handleAdminTableData, handleAdminConfig } from './handlers/admin.js';
 
@@ -230,39 +240,106 @@ export default {
         // ════════════════════════════════════════════════════════════════════
 
         if (path.startsWith('/v1/staff/') || path.startsWith('/v1/admin/')) {
-            // const staffAuth = await authenticateStaffJWT(request, env);
-            // if (!staffAuth.valid) return respond({ error: 'Unauthorized' }, { status: 401 });
+            const staffAuth = await authenticateStaffJWT(request, env);
+            if (!staffAuth.valid) return respond({ error: 'Unauthorized' }, { status: 401 });
+            const staff = staffAuth.staff;
 
-            // ── Member management ──────────────────────────────────────────
-            // GET  /v1/admin/members          — list all members + filter
-            // POST /v1/admin/members/:id/approve
-            // POST /v1/admin/members/:id/suspend
-            // POST /v1/admin/members/:id/ban
+            // ── Broker reports — exact paths BEFORE numeric-id regex (L079, L086) ──
+            if (path === '/v1/admin/brokers/reports' && method === 'GET') {
+                return respond(await handleListPaymentReports(request, env, staff));
+            }
+            if (path.match(/^\/v1\/admin\/brokers\/reports\/\d+\/resolve$/) && method === 'POST') {
+                const reportId = parseInt(path.split('/')[5]);
+                return respond(await handleResolvePaymentReport(reportId, request, env, staff));
+            }
+            if (path.match(/^\/v1\/admin\/brokers\/flags\/\d+\/resolve$/) && method === 'POST') {
+                const flagId = parseInt(path.split('/')[5]);
+                return respond(await handleResolveBrokerFlag(flagId, request, env, staff));
+            }
 
-            // ── Broker management ──────────────────────────────────────────
-            // GET  /v1/admin/brokers          — vetting pipeline
-            // POST /v1/admin/brokers/:id/advance — move to next phase
-            // POST /v1/admin/brokers/:id/approve
-            // POST /v1/admin/brokers/:id/reject
-            // POST /v1/admin/brokers/:id/suspend
-            // GET  /v1/admin/brokers/:id/compliance
-            // POST /v1/admin/brokers/:id/flag
+            // ── Broker applications ────────────────────────────────────────
+            if (path === '/v1/admin/brokers' && method === 'GET') {
+                return respond(await handleListBrokerApps(request, env, staff));
+            }
+            if (path.match(/^\/v1\/admin\/brokers\/\d+$/) && method === 'GET') {
+                const appId = parseInt(path.split('/')[4]);
+                return respond(await handleGetBrokerApp(appId, env));
+            }
+            if (path.match(/^\/v1\/admin\/brokers\/\d+\/advance$/) && method === 'POST') {
+                const appId = parseInt(path.split('/')[4]);
+                return respond(await handleAdvanceBrokerPhase(appId, request, env, staff));
+            }
+            if (path.match(/^\/v1\/admin\/brokers\/\d+\/approve$/) && method === 'POST') {
+                const appId = parseInt(path.split('/')[4]);
+                return respond(await handleApproveBroker(appId, request, env, staff));
+            }
+            if (path.match(/^\/v1\/admin\/brokers\/\d+\/reject$/) && method === 'POST') {
+                const appId = parseInt(path.split('/')[4]);
+                return respond(await handleRejectBroker(appId, request, env, staff));
+            }
+            if (path.match(/^\/v1\/admin\/brokers\/\d+\/suspend$/) && method === 'POST') {
+                const appId = parseInt(path.split('/')[4]);
+                return respond(await handleSuspendBroker(appId, request, env, staff));
+            }
+            if (path.match(/^\/v1\/admin\/brokers\/\d+\/reinstate$/) && method === 'POST') {
+                const appId = parseInt(path.split('/')[4]);
+                return respond(await handleReinstateBroker(appId, request, env, staff));
+            }
 
-            // ── Legal management ───────────────────────────────────────────
-            // GET  /v1/admin/legal            — all document versions
-            // POST /v1/admin/legal            — upload new version
-            // POST /v1/admin/legal/:id/publish — deploy + trigger consent wall
-            // GET  /v1/admin/legal/export/:memberId — lawyer consent export
+            // ── Broker documents ───────────────────────────────────────────
+            if (path.match(/^\/v1\/admin\/brokers\/\d+\/documents$/) && method === 'POST') {
+                const appId = parseInt(path.split('/')[4]);
+                return respond(await handleAttachBrokerDocument(appId, request, env, staff));
+            }
+            if (path.match(/^\/v1\/admin\/brokers\/\d+\/documents$/) && method === 'GET') {
+                const appId = parseInt(path.split('/')[4]);
+                return respond(await handleListBrokerDocuments(appId, env));
+            }
 
-            // ── Platform config ────────────────────────────────────────────
-            // GET  /v1/admin/config           — all platform_config rows
-            // PUT  /v1/admin/config/:key      — update a config value
+            // ── Broker compliance ──────────────────────────────────────────
+            if (path.match(/^\/v1\/admin\/brokers\/\d+\/compliance\/\d+\/result$/) && method === 'POST') {
+                const parts   = path.split('/');
+                const appId   = parseInt(parts[4]);
+                const checkId = parseInt(parts[6]);
+                return respond(await handleRecordComplianceResult(appId, checkId, request, env, staff));
+            }
+            if (path.match(/^\/v1\/admin\/brokers\/\d+\/compliance$/) && method === 'GET') {
+                const appId = parseInt(path.split('/')[4]);
+                return respond(await handleListComplianceChecks(appId, env));
+            }
+            if (path.match(/^\/v1\/admin\/brokers\/\d+\/compliance$/) && method === 'POST') {
+                const appId = parseInt(path.split('/')[4]);
+                return respond(await handleCreateComplianceCheck(appId, request, env, staff));
+            }
 
-            // ── Dispute management ─────────────────────────────────────────
-            // GET  /v1/admin/disputes         — open disputes
+            // ── Broker flags ───────────────────────────────────────────────
+            if (path.match(/^\/v1\/admin\/brokers\/\d+\/flags$/) && method === 'GET') {
+                const appId = parseInt(path.split('/')[4]);
+                return respond(await handleListBrokerFlags(appId, env));
+            }
+            if (path.match(/^\/v1\/admin\/brokers\/\d+\/flag$/) && method === 'POST') {
+                const appId = parseInt(path.split('/')[4]);
+                return respond(await handleRaiseBrokerFlag(appId, request, env, staff));
+            }
+
+            // ── Member management (admin.js — not yet built) ───────────────
+            // GET  /v1/admin/members
+            // POST /v1/admin/members/:id/approve|suspend|ban
+
+            // ── Legal management (legal.js — not yet built) ────────────────
+            // GET/POST /v1/admin/legal
+            // POST /v1/admin/legal/:id/publish
+            // GET  /v1/admin/legal/export/:memberId
+
+            // ── Platform config (admin.js — not yet built) ─────────────────
+            // GET /v1/admin/config
+            // PUT /v1/admin/config/:key
+
+            // ── Dispute management (admin.js — not yet built) ──────────────
+            // GET  /v1/admin/disputes
             // POST /v1/admin/disputes/:orderId/resolve
 
-            return respond({ error: 'Staff routes — handlers not yet built' }, { status: 503 });
+            return respond({ error: 'Staff route not found.' }, { status: 404 });
         }
 
         // ════════════════════════════════════════════════════════════════════
@@ -378,7 +455,15 @@ export default {
         // GET  /v1/consent/pending     — pending docs  (legal.js — not built yet)
         // POST /v1/consent/sign        — sign doc      (legal.js — not built yet)
 
-        return respond({ error: 'Not found' }, { status: 404 });
+        // ── Broker (member actions) ────────────────────────────────────────────
+        if (path === '/v1/brokers/apply' && method === 'POST') {
+            return respond(await handleApplyBroker(request, env, memberId));
+        }
+        if (path === '/v1/brokers/report' && method === 'POST') {
+            return respond(await handleReportPaymentBypass(request, env, memberId));
+        }
+
+                return respond({ error: 'Not found' }, { status: 404 });
     },
 
     // ════════════════════════════════════════════════════════════════════════
